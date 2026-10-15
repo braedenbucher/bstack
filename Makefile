@@ -3,7 +3,6 @@ CPPFLAGS = -I include -Wall -Werror -pthread
 src = $(wildcard src/*.c)
 obj = $(patsubst src/%.c, build/%.o, $(src))
 headers = $(wildcard include/*.h)
-apps = apps/curl/curl
 
 lvl-ip: $(obj)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(obj) -o lvl-ip
@@ -17,20 +16,13 @@ build/%.o: src/%.c ${headers}
 debug: CFLAGS+= -DDEBUG_SOCKET -DDEBUG_TCP -g -fsanitize=thread
 debug: lvl-ip
 
-apps: $(apps)
+tools:
 	$(MAKE) -C tools
-	$(MAKE) -C apps/curl
-	$(MAKE) -C apps/curl-poll
 
-all: lvl-ip apps
-
-test: debug apps
-	@echo
-	@echo "Networking capabilites are required for test dependencies:"
-	which arping | sudo xargs setcap cap_net_raw=ep
-	which tc | sudo xargs setcap cap_net_admin=ep
-	@echo
-	cd tests && ./test-run-all
+all: lvl-ip tools
 
 clean:
-	rm build/*.o lvl-ip
+	rm -f build/*.o lvl-ip
+	$(MAKE) -C tools clean
+
+.PHONY: all debug tools clean
